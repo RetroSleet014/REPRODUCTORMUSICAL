@@ -2,7 +2,7 @@ import sys
 import os
 import random
 import threading
-import queue # Still need for general queue usage, though not explicitly used for sounddevice internal buffer
+import queue # Todavía necesario para el uso general de la cola, aunque no se usa explícitamente para el búfer interno de sounddevice
 import time
 import numpy as np
 import traceback # Para imprimir el stack trace completo en caso de error
@@ -42,20 +42,20 @@ except ImportError as e:
         def close(self): pass
         def write(self, data): pass
         def active(self): return False
-        def query_devices(self): return "SoundDevice no disponible" # Add this for diagnostics
+        def query_devices(self): return "SoundDevice no disponible" # Añadir esto para diagnóstico
         def query_supported_settings(self, *args, **kwargs): return {'samplerate': 0, 'channels': 0, 'blocksize': 0} # Dummy
         def check_output_settings(self, *args, **kwargs): pass # Dummy
     if sd is None:
         sd = DummySoundDevice() # Asigna la clase dummy
         sd.OutputStream = DummySoundDevice # Asigna el OutputStream
     
-    # Also create dummy functions for iirfilter and lfilter if not imported
+    # También crea funciones dummy para iirfilter y lfilter si no se importan
     if iirfilter is None:
         def iirfilter(*args, **kwargs): return [1.0], [1.0]
     if lfilter is None:
         def lfilter(b, a, x, zi=None): 
-            if zi is not None: return x, zi # Passthrough data and zi
-            return x # Passthrough data
+            if zi is not None: return x, zi # Pasa los datos y zi
+            return x # Pasa los datos
     
 # Importaciones para metadatos (mutagen) - Mutagen sigue siendo útil
 from mutagen.mp3 import MP3
@@ -81,7 +81,7 @@ class ClickableSlider(QSlider):
             # Calcula el valor de la posición del clic
             if self.orientation() == Qt.Orientation.Horizontal:
                 value = self.minimum() + ((self.maximum() - self.minimum()) * event.pos().x()) / self.width()
-            else: # Vertical slider
+            else: # Deslizador vertical
                 value = self.minimum() + ((self.maximum() - self.minimum()) * (self.height() - event.pos().y())) / self.height()
             
             # Establece el valor del deslizador
@@ -304,7 +304,7 @@ class MusicPlayer(QMainWindow):
                     self.current_index = self.playlist.index(next_file) # Actualiza el índice normal para la UI
                     self.track_list.setCurrentRow(self.current_index)
 
-                elif self.playlist: # No shuffle, REPEAT_ALL
+                elif self.playlist: # No aleatorio, REPEAT_ALL
                     current_idx = self.current_index
                     next_idx = (current_idx + 1) % len(self.playlist)
                     next_file = self.playlist[next_idx]
@@ -449,7 +449,7 @@ class MusicPlayer(QMainWindow):
         tracknum = '-'
         album_art_data = None
         
-        # Ensure current_tracknum_raw is always defined in this scope
+        # Asegurarse de que current_tracknum_raw siempre esté definido en este alcance
         current_tracknum_raw = tracknum 
 
         try:
@@ -462,34 +462,34 @@ class MusicPlayer(QMainWindow):
                 audio = OggVorbis(file_path)
 
             if audio and audio.tags:
-                # Get Title
+                # Obtener título
                 title_tag = audio.tags.get('title')
                 if isinstance(title_tag, list) and title_tag:
                     title = str(title_tag[0])
                 elif 'TIT2' in audio.tags:
                     title = str(audio.tags.get('TIT2'))
 
-                # Get Artist
+                # Obtener artista
                 artist_tag = audio.tags.get('artist')
                 if isinstance(artist_tag, list) and artist_tag:
                     artist = str(artist_tag[0])
                 elif 'TPE1' in audio.tags:
                     artist = str(audio.tags.get('TPE1'))
 
-                # Get Album
+                # Obtener álbum
                 album_tag = audio.tags.get('album')
                 if isinstance(album_tag, list) and album_tag:
                     album = str(album_tag[0])
                 elif 'TALB' in audio.tags:
                     album = str(audio.tags.get('TALB'))
 
-                # Get Track Number
+                # Obtener número de pista
                 tracknum_tag = audio.tags.get('tracknumber')
                 if isinstance(tracknum_tag, list) and tracknum_tag:
                     current_tracknum_raw = str(tracknum_tag[0])
                 elif 'TRCK' in audio.tags:
                     current_tracknum_raw = str(audio.tags.get('TRCK'))
-                # If no tag is found, current_tracknum_raw remains its initialized value '-'
+                # Si no se encuentra ninguna etiqueta, current_tracknum_raw permanece con su valor inicial '-'
 
                 if isinstance(audio.tags, ID3):
                     for k, v in audio.tags.items():
@@ -498,7 +498,7 @@ class MusicPlayer(QMainWindow):
                             break
                 elif hasattr(audio.tags, 'pictures') and audio.tags.pictures:
                     for pic in audio.tags.pictures:
-                        if pic.type == 3: # Front Cover
+                        if pic.type == 3: # Portada frontal
                             album_art_data = pic.data
                             break
 
@@ -507,11 +507,11 @@ class MusicPlayer(QMainWindow):
         except Exception as e:
             print(f"Error general al leer metadatos de {file_path}: {e}")
 
-        # Process current_tracknum_raw outside the try block
+        # Procesar current_tracknum_raw fuera del bloque try
         if isinstance(current_tracknum_raw, str) and '/' in current_tracknum_raw:
             tracknum = current_tracknum_raw.split('/')[0]
         else:
-            tracknum = str(current_tracknum_raw) # Ensure it's a string, even if '-'
+            tracknum = str(current_tracknum_raw) # Asegurarse de que sea una cadena, incluso si es '-'
 
 
         self.lbl_title.setText(f"Title: {title}")
@@ -596,7 +596,7 @@ class MusicPlayer(QMainWindow):
         
         self.equalizer_filters = new_filters
         
-        # Resetear los estados de los filtros para evitar artifacts de audio
+        # Resetear los estados de los filtros para evitar artefactos de audio
         # Esto es crucial para que los filtros se apliquen correctamente a la nueva configuración
         # y no arrastren estados de la configuración anterior.
         # Asegurarse de que el número de canales en el estado de filtro coincida
@@ -977,26 +977,26 @@ class MusicPlayer(QMainWindow):
                 current_frame_pos = self.current_frame 
                 print(f"DEBUG: _audio_playback_thread_main: Starting playback from current_frame_pos: {current_frame_pos}")
                 print_counter = 0 
-                # Print interval, if total_frames is very small (e.g., a few blocks)
-                # Ensure print_interval doesn't become 0, min 1
-                print_interval = max(1, self.total_frames // blocksize // 20) # print about 20 times per song
-                if self.total_frames < blocksize * 20: # For very short songs, print more often
+                # Intervalo de impresión, si total_frames es muy pequeño (ej. unos pocos bloques)
+                # Asegurarse de que print_interval no sea 0, mínimo 1
+                print_interval = max(1, self.total_frames // blocksize // 20) # imprime unas 20 veces por canción
+                if self.total_frames < blocksize * 20: # Para canciones muy cortas, imprime más a menudo
                     print_interval = 1
 
 
                 while not self.stop_playback_event.is_set():
-                    # PAUSE LOGIC: While the pause_playback_event is set, keep the thread waiting.
+                    # LÓGICA DE PAUSA: Mientras el evento pause_playback_event esté establecido, mantén el hilo esperando.
                     while self.pause_playback_event.is_set():
                         print("DEBUG: _audio_playback_thread_main: Hilo pausado. Durmiendo...")
-                        time.sleep(0.05) # Sleep for 50ms to avoid busy-waiting
-                        if self.stop_playback_event.is_set(): # Check for stop signal while paused
+                        time.sleep(0.05) # Espera 50ms para evitar el bucle ocupado
+                        if self.stop_playback_event.is_set(): # Comprueba la señal de parada mientras está en pausa
                             print("DEBUG: _audio_playback_thread_main: Stop detectado durante pausa. Saliendo.")
-                            break # Break from inner while loop to exit thread
+                            break # Sale del bucle while interno para salir del hilo
                     
-                    # If the outer loop's condition was met (stop_playback_event is set)
+                    # Si la condición del bucle exterior se cumplió (stop_playback_event está establecido)
                     if self.stop_playback_event.is_set(): 
                         print("DEBUG: _audio_playback_thread_main: stop_playback_event detectado después de pausa. Saliendo.")
-                        break # Break from outer while loop
+                        break # Sale del bucle while exterior
 
                     if current_frame_pos >= self.total_frames:
                         print("DEBUG: _audio_playback_thread_main: Fin de la canción (current_frame_pos >= total_frames). Señalando finalización.")
@@ -1004,7 +1004,7 @@ class MusicPlayer(QMainWindow):
                         break 
 
                     frames_to_read = min(blocksize, self.total_frames - current_frame_pos)
-                    # If frames_to_read is 0 or negative, it means we are at the end, break
+                    # Si frames_to_read es 0 o negativo, significa que estamos al final, salir
                     if frames_to_read <= 0:
                         print("DEBUG: _audio_playback_thread_main: No más frames para leer. Fin de la canción.")
                         self.playback_finished_event.set()
@@ -1022,7 +1022,7 @@ class MusicPlayer(QMainWindow):
                     current_equalizer_filters = list(self.equalizer_filters) 
 
                     for i, (b, a) in enumerate(current_equalizer_filters):
-                        # Only apply filter if it's not a passthrough (b=[1], a=[1])
+                        # Solo aplica el filtro si no es un paso directo (b=[1], a=[1])
                         if not (len(b) == 1 and np.isclose(b[0], 1.0) and len(a) == 1 and np.isclose(a[0], 1.0)):
                             for channel_idx in range(self.audio_channels):
                                 if current_filter_states[i].shape[0] > 0: 
@@ -1073,12 +1073,12 @@ class MusicPlayer(QMainWindow):
             self.ui_update_timer.stop()
             print("DEBUG: stop_playback: UI Timer detenido.")
 
-        self.stop_playback_event.set() # Signal the audio thread to stop
-        self.pause_playback_event.clear() # Ensure not paused (so it can respond to stop_playback_event)
+        self.stop_playback_event.set() # Señaliza al hilo de audio para que se detenga
+        self.pause_playback_event.clear() # Asegura que no esté en pausa (para que pueda responder a stop_playback_event)
         print("DEBUG: stop_playback: Eventos de detención y pausa configurados.")
 
-        # Save player state only if a song was actually loaded and playing/paused
-        # And only if current_playback_file is not None and exists
+        # Guarda el estado del reproductor solo si una canción estaba realmente cargada y reproduciéndose/pausada
+        # Y solo si current_playback_file no es None y existe
         if self.current_playback_file and os.path.exists(self.current_playback_file) and self.total_frames > 0:
             self.save_player_state_on_stop("StoppedState" if final_stop else "SeekingStop")
         else:
@@ -1121,14 +1121,14 @@ class MusicPlayer(QMainWindow):
             return
 
         if self.current_playback_file is None:
-            # If nothing is playing, start from the first song or the last saved
+            # Si no hay nada reproduciéndose, comienza desde la primera canción o la última guardada
             if self.current_index == -1 and self.playlist:
                 self.current_index = 0
             if self.playlist:
                 file_to_play = self.playlist[self.current_index]
                 self.load_and_play(file_to_play, start_position_ms=0)
             else:
-                return # No songs to play
+                return # No hay canciones para reproducir
 
         elif self.is_playing:
             self.pause_playback_event.set()
@@ -1137,7 +1137,7 @@ class MusicPlayer(QMainWindow):
             self.update_playback_status_label("PausedState")
             print("DEBUG: Pausado.")
         else:
-            self.pause_playback_event.clear() # Resume
+            self.pause_playback_event.clear() # Reanudar
             self.is_playing = True
             self.btn_play.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPause))
             self.update_playback_status_label("PlayingState")
@@ -1146,13 +1146,13 @@ class MusicPlayer(QMainWindow):
     def prev_track(self):
         """Reproduce la pista anterior en la playlist."""
         if not self.playlist: return
-        self.stop_playback(final_stop=False) # Stop current track to allow seamless transition
+        self.stop_playback(final_stop=False) # Detiene la pista actual para permitir una transición fluida
 
         if self._shuffle_mode and self.shuffled_playlist:
             self.current_shuffled_index = (self.current_shuffled_index - 1) % len(self.shuffled_playlist)
             next_file = self.shuffled_playlist[self.current_shuffled_index]
             self.load_and_play(next_file)
-            self.current_index = self.playlist.index(next_file) # Update normal index for UI selection
+            self.current_index = self.playlist.index(next_file) # Actualiza el índice normal para la selección de la UI
             self.track_list.setCurrentRow(self.current_index)
         else:
             self.current_index = (self.current_index - 1 + len(self.playlist)) % len(self.playlist)
@@ -1162,10 +1162,10 @@ class MusicPlayer(QMainWindow):
     def next_track(self):
         """Reproduce la siguiente pista en la playlist."""
         if not self.playlist: return
-        self.stop_playback(final_stop=False) # Stop current track to allow seamless transition
+        self.stop_playback(final_stop=False) # Detiene la pista actual para permitir una transición fluida
 
         if self._repeat_mode == self.REPEAT_CURRENT:
-            # If repeating current, just replay the same song
+            # Si se repite la actual, simplemente reproduce la misma canción
             self.load_and_play(self.current_playback_file or self.playlist[self.current_index])
             return
 
@@ -1173,7 +1173,7 @@ class MusicPlayer(QMainWindow):
             self.current_shuffled_index = (self.current_shuffled_index + 1) % len(self.shuffled_playlist)
             next_file = self.shuffled_playlist[self.current_shuffled_index]
             self.load_and_play(next_file)
-            self.current_index = self.playlist.index(next_file) # Update normal index for UI selection
+            self.current_index = self.playlist.index(next_file) # Actualiza el índice normal para la selección de la UI
             self.track_list.setCurrentRow(self.current_index)
         else:
             self.current_index = (self.current_index + 1) % len(self.playlist)
@@ -1188,7 +1188,7 @@ class MusicPlayer(QMainWindow):
             self.rebuild_shuffled_playlist()
             self._show_message_box("Modo Aleatorio", "Reproducción aleatoria activada.")
         else:
-            # If shuffle is off, reset to the current song's position in the original playlist
+            # Si el aleatorio está desactivado, restablece la posición a la canción actual en la playlist original
             if self.current_playback_file and self.current_playback_file in self.playlist:
                 self.current_index = self.playlist.index(self.current_playback_file)
                 self.track_list.setCurrentRow(self.current_index)
@@ -1231,7 +1231,7 @@ class MusicPlayer(QMainWindow):
         """Reproduce la canción seleccionada en la lista."""
         selected_items = self.track_list.selectedItems()
         if selected_items:
-            # Get the actual file path from the playlist based on the selected row
+            # Obtiene la ruta de archivo real de la playlist basándose en la fila seleccionada
             index = self.track_list.row(selected_items[0])
             if 0 <= index < len(self.playlist):
                 selected_file_path = self.playlist[index]
@@ -1250,9 +1250,9 @@ class MusicPlayer(QMainWindow):
         else:
             for i in range(self.track_list.count()):
                 item = self.track_list.item(i)
-                file_path = self.playlist[i] # Get the original file path
+                file_path = self.playlist[i] # Obtiene la ruta de archivo original
                 
-                # Extract metadata for a more robust search
+                # Extrae metadatos para una búsqueda más robusta
                 title = os.path.splitext(os.path.basename(file_path))[0]
                 artist = ''
                 album = ''
@@ -1279,7 +1279,7 @@ class MusicPlayer(QMainWindow):
                             album = str(audio.tags['TALB'])
 
                 except Exception:
-                    pass # Ignore errors, fall back to filename
+                    pass # Ignorar errores, recurrir al nombre de archivo
 
                 search_string = f"{title} {artist} {album} {os.path.basename(file_path)}".lower()
                 if text.lower() in search_string:
@@ -1290,9 +1290,9 @@ class MusicPlayer(QMainWindow):
     def show_context_menu(self, position):
         """Muestra un menú contextual para la lista de pistas."""
         menu = QMenu()
-        play_action = menu.addAction("Play")
-        remove_action = menu.addAction("Remove")
-        clear_all_action = menu.addAction("Clear All")
+        play_action = menu.addAction("Reproducir")
+        remove_action = menu.addAction("Eliminar")
+        clear_all_action = menu.addAction("Borrar todo")
         
         action = menu.exec(self.track_list.mapToGlobal(position))
         
@@ -1353,7 +1353,7 @@ class MusicPlayer(QMainWindow):
             else:
                 print(f"Advertencia: La última canción '{last_song}' no se encontró en la playlist cargada.")
         elif self.playlist:
-            # If no last song, select the first one
+            # Si no hay última canción, selecciona la primera
             self.current_index = 0
             self.track_list.setCurrentRow(self.current_index)
             self.update_metadata(self.playlist[self.current_index])
@@ -1366,12 +1366,12 @@ class MusicPlayer(QMainWindow):
         """Guarda el estado actual del reproductor al detenerse o cerrar."""
         if self.current_playback_file:
             self.settings.setValue("last_opened_song", self.current_playback_file)
-            # Store position in milliseconds
+            # Almacena la posición en milisegundos
             current_ms = int((self.current_frame / self.audio_samplerate) * 1000) if self.audio_samplerate > 0 else 0
             self.settings.setValue("last_opened_position", current_ms)
             print(f"Estado del reproductor guardado: {os.path.basename(self.current_playback_file)} a {current_ms}ms (razón: {reason})")
         else:
-            # Clear saved state if no song is playing
+            # Borra el estado guardado si no se está reproduciendo ninguna canción
             self.settings.remove("last_opened_song")
             self.settings.remove("last_opened_position")
             print("Estado del reproductor limpiado (no hay canción activa).")
@@ -1435,7 +1435,7 @@ class MusicPlayer(QMainWindow):
         self.is_playing = False # True si está reproduciendo, False si está pausado o detenido
         print("DEBUG: __init__: Eventos y flags de hilos inicializados.")
 
-        # Inicializar los filtros del ecualizador (coeficientes, no dependen de channels)
+        # Inicializar los filtros del ecualizador (coeficientes, no dependen de canales)
         print("DEBUG: __init__: Diseñando filtros de ecualizador iniciales...")
         self.equalizer_filters = [self._design_band_filter(freq, 0) for freq in self._get_band_frequencies()]
         print("DEBUG: __init__: Filtros de ecualizador diseñados.")
@@ -1488,20 +1488,20 @@ class MusicPlayer(QMainWindow):
                                 sd.check_output_settings(device=self.selected_output_device_index, samplerate=rate, channels=selected_device_info['max_output_channels'], dtype='float32')
                                 supported_rates.append(rate)
                             except sd.PortAudioError:
-                                pass # This sample rate is not supported
+                                pass # Esta frecuencia de muestreo no es compatible
                         print(f"Sample rates soportadas por el dispositivo ({selected_device_info['name']}): {supported_rates}")
                     except Exception as e:
                         print(f"ERROR: __init__: Error al verificar sample rates soportadas: {e}")
 
                 else:
                     print("Advertencia: No se encontró ningún dispositivo de salida de audio válido. La reproducción podría fallar.")
-                    self.audio_channels = 2 # Fallback (default to stereo if no device found)
+                    self.audio_channels = 2 # Valor predeterminado (por defecto a estéreo si no se encuentra ningún dispositivo)
                 
             except Exception as e:
                 print(f"ERROR: __init__: EXCEPCIÓN DETECTADA AL CONSULTAR DISPOSITIVOS DE AUDIO: {e}")
                 traceback.print_exc() # Imprimir el stack trace completo para este error
                 self.selected_output_device_index = -1 # Asegurar que esté marcado como inválido
-                self.audio_channels = 2 # Fallback
+                self.audio_channels = 2 # Valor predeterminado
         else:
             print("DEBUG: __init__: sd es False. Librerías DSP no disponibles. No se consultarán dispositivos de audio.")
         
@@ -1528,13 +1528,13 @@ class MusicPlayer(QMainWindow):
 
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit(self)
-        self.search_input.setPlaceholderText("Search title, artist, or album...")
+        self.search_input.setPlaceholderText("Buscar título, artista o álbum...")
         self.search_input.textChanged.connect(self.filter_track_list) 
         search_layout.addWidget(self.search_input)
 
         self.btn_clear_search = QPushButton(self)
         self.btn_clear_search.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCloseButton))
-        self.btn_clear_search.setToolTip("Clear search")
+        self.btn_clear_search.setToolTip("Borrar búsqueda")
         self.btn_clear_search.setFixedSize(30, 30)
         self.btn_clear_search.clicked.connect(self.search_input.clear)
         search_layout.addWidget(self.btn_clear_search)
@@ -1559,17 +1559,17 @@ class MusicPlayer(QMainWindow):
         print("DEBUG: __init__: Lista de pistas y arte de álbum configurados.")
 
         meta_layout = QVBoxLayout()
-        self.lbl_title = QLabel("Title: -", self)
-        self.lbl_artist = QLabel("Artist: -", self)
-        self.lbl_album = QLabel("Album: -", self)
-        self.lbl_track = QLabel("Track: -", self)
+        self.lbl_title = QLabel("Título: -", self)
+        self.lbl_artist = QLabel("Artista: -", self)
+        self.lbl_album = QLabel("Álbum: -", self)
+        self.lbl_track = QLabel("Pista: -", self)
         for lbl in (self.lbl_title, self.lbl_artist, self.lbl_album, self.lbl_track):
             lbl.setStyleSheet("color: #ddd; font-size: 14px;")
             meta_layout.addWidget(lbl)
         layout.addLayout(meta_layout)
         print("DEBUG: __init__: Etiquetas de metadatos configuradas.")
 
-        self.lbl_status = QLabel("Status: Stopped", self)
+        self.lbl_status = QLabel("Estado: Detenido", self)
         self.lbl_status.setStyleSheet("color: #aaa; font-size: 12px; font-style: italic;")
         layout.addWidget(self.lbl_status)
         print("DEBUG: __init__: Etiqueta de estado configurada.")
@@ -1602,36 +1602,36 @@ class MusicPlayer(QMainWindow):
 
         self.btn_save_playlist = QPushButton(self)
         self.btn_save_playlist.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton))
-        self.btn_save_playlist.setText("Save Playlist")
+        self.btn_save_playlist.setText("Guardar Playlist")
         self.btn_save_playlist.clicked.connect(self.save_playlist)
 
         self.btn_load_playlist = QPushButton(self)
         self.btn_load_playlist.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOpenButton))
-        self.btn_load_playlist.setText("Load Playlist")
+        self.btn_load_playlist.setText("Cargar Playlist")
         self.btn_load_playlist.clicked.connect(self.load_playlist)
 
         self.btn_remove_selected = QPushButton(self)
         self.btn_remove_selected.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
-        self.btn_remove_selected.setText("Remove Selected")
+        self.btn_remove_selected.setText("Eliminar Seleccionadas")
         self.btn_remove_selected.clicked.connect(self.remove_selected_tracks)
 
         self.btn_clear_playlist = QPushButton(self)
         self.btn_clear_playlist.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogResetButton))
-        self.btn_clear_playlist.setText("Clear Playlist")
+        self.btn_clear_playlist.setText("Borrar Playlist")
         self.btn_clear_playlist.clicked.connect(self.clear_playlist)
 
         self.btn_move_up = QPushButton(self)
         self.btn_move_up.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowUp))
-        self.btn_move_up.setToolTip("Move selected track up")
+        self.btn_move_up.setToolTip("Mover pista seleccionada hacia arriba")
         self.btn_move_up.clicked.connect(self.move_track_up)
 
         self.btn_move_down = QPushButton(self)
         self.btn_move_down.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowDown))
-        self.btn_move_down.setToolTip("Move selected track down")
+        self.btn_move_down.setToolTip("Mover pista seleccionada hacia abajo")
         self.btn_move_down.clicked.connect(self.move_track_down)
 
         self.btn_equalizer = QPushButton(self)
-        self.btn_equalizer.setText("Equalizer")
+        self.btn_equalizer.setText("Ecualizador")
         self.btn_equalizer.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
         self.btn_equalizer.clicked.connect(self.open_equalizer_window)
 
@@ -1663,7 +1663,7 @@ class MusicPlayer(QMainWindow):
         self.vol_slider.setRange(0, 100)
         last_volume = self.settings.value("last_volume", 50, type=int)
         self.vol_slider.setValue(last_volume)
-        # El volumen se aplicará en el hilo de salida de audio ahora
+        # El volumen real se aplicará en el hilo de salida de audio ahora
         self.vol_slider.valueChanged.connect(self.set_and_save_volume)
         self.vol_slider.setFixedWidth(120)
 
@@ -1693,7 +1693,7 @@ class MusicPlayer(QMainWindow):
         self.ui_update_timer.timeout.connect(self._update_ui_from_threads)
         print("DEBUG: __init__: Señales de UI y timer configurados.")
         
-        # Elimina esta bandera, ya no es necesaria con la lógica unificada en seek_position_audio
+        # Esta bandera se ha eliminado, ya no es necesaria con la lógica unificada en seek_position_audio
         # self._was_playing_before_seek = False 
         self.setup_keyboard_shortcuts()
         print("DEBUG: __init__: Atajos de teclado configurados.")
@@ -1712,6 +1712,6 @@ if __name__ == '__main__':
         win.show()
         sys.exit(app.exec())
     except Exception as e:
-        print(f"FATAL ERROR: La aplicación falló durante el inicio: {e}")
+        print(f"ERROR FATAL: La aplicación falló durante el inicio: {e}")
         traceback.print_exc() # Imprimir el stack trace completo
         sys.exit(1)
